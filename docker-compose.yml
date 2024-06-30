@@ -1,0 +1,128 @@
+version: '3'
+
+services:
+  nginx:
+    container_name: nginx
+    build:
+      context: ./docker
+      dockerfile: nginx.dockerfile
+    ports:
+      - "99:80"
+    volumes:
+      - ./contents:/workspace:delegated
+    env_file:
+      - .env
+    depends_on:
+      - app 
+      - mysql
+
+  mysql:
+    container_name: mysql
+    image: mysql/mysql-server:8.0
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "3309:3306"
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      SERVICE_TAGS: ${SERVICE_TAGS} 
+      SERVICE_NAME: ${SERVICE_NAME} 
+
+  app:
+    container_name: app
+    build:
+      context: ./docker
+      dockerfile: php.dockerfile
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./contents:/workspace:delegated
+    tty: true
+    entrypoint: 
+      - sh
+      - -c
+      - |
+        composer install &&
+        chmod -R 777 /workspace &&  
+        php artisan storage:link && 
+        php artisan migrate:refresh --seed &&
+        php-fpm -y /usr/local/etc/php-fpm.conf -R
+
+  rector:
+    container_name: rector
+    build:
+      context: ./docker
+      dockerfile: rector.dockerfile
+    volumes: 
+      - ./contents:/project:delegated
+    # entrypoint: ["tail", "-f", "/dev/null"]
+    tty: true
+    entrypoint: 
+      - sh
+      - -c
+      - |
+        cd tools/rector &&
+        composer install &&
+        tail -f /dev/null
+    # entrypoint: ["sh", "-c", "cd tools/rector && composer install && while true; do sleep 86400; done"]
+      
+  client:
+    image: node:18.14.2
+    container_name: client
+    volumes:
+      - ./contents/client:/workspace/client:delegated
+    ports:
+      - "8089:8080"
+    working_dir: /workspace/client/
+    entrypoint: 
+      - sh
+      - -c
+      - |
+        npm install &&
+        npm run serve &&
+        tail -f /dev/null
+
+  django:
+    image: python:3.10.6 
+    container_name: django
+    volumes:
+      - ./contents/django:/workspace/django:delegated
+    ports:
+      - "8099:8000"
+    working_dir: /workspace/django/
+    tty: true
+    entrypoint: 
+      - sh
+      - -c
+      - |
+        pip install --upgrade pip && 
+        pip install -r requirements.txt &&
+        python manage.py migrate && 
+        python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - l5-swagger-app 
+
+  l5-swagger-app:
+    image: l5-swagger-app
+    container_name: swagger
+    restart: "no"
+    build:
+      args:
+        user: l5-swagger
+        uid: 1000
+      context: ./docker
+      dockerfile: swagger.dockerfile
+      target: local
+    volumes:
+      - ./contents:/app/l5-swagger-app:rw
+    ports:
+      - "7777:80"
+    depends_on:
+      - mysql
+      - app
+      - rector
+      - client

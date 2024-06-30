@@ -1,0 +1,96 @@
+name: PHPStan
+
+on:
+  push:
+    branches:
+      - develop 
+  pull_request:
+    branches:
+      - develop 
+
+jobs:
+
+  # php_unit_test:
+  #   name: PHP Unit Test 
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup MySQL 
+  #       uses: mirromutth/mysql-action@v1.1
+  #       with: 
+  #         host port: 3309
+  #         container port: 3306 
+  #         mysql database: 'linebot' 
+  #         mysql user: 'hivanmanh' 
+  #         mysql password: 'hivanmanh'
+  #         mysql root password: 'hivanmanh'
+
+  #     - name: Setup PHP
+  #       uses: shivammathur/setup-php@v2
+  #       with:
+  #         php-version: '8.1.2' 
+
+  #     - name: Install Composer dependencies
+  #       working-directory: contents
+  #       run: composer install 
+
+  #     - name: Prepare Laravel Application
+  #       working-directory: contents
+  #       run: |
+  #         cp .env.example .env
+  #         php artisan key:generate
+
+  #       env:
+  #         APP_ENV: testing
+  #         JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+  #     - name: Run migrations and seed database
+  #       working-directory: contents
+  #       run: php artisan migrate:fresh --seed
+
+  #     - name: Run unit tests
+  #       working-directory: contents
+  #       run: php artisan test
+
+  # phpstan:
+  #   name: PHPStan Check
+  #   runs-on: ubuntu-latest
+  #   needs: php_unit_test
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
+
+  #     - name: Setup PHP
+  #       uses: shivammathur/setup-php@v2
+  #       with:
+  #         php-version: '8.1.2' 
+
+  #     - name: Install Composer dependencies
+  #       working-directory: contents
+  #       run: composer install 
+
+  #     - name: Run PHPStan
+  #       working-directory: contents
+  #       run: php vendor/bin/phpstan analyse --configuration phpstan.neon
+
+  rector:
+    name: Rector Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+ 
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1.2' 
+
+      - name: Install Composer dependencies
+        working-directory: contents/tools/rector
+        run: composer install 
+
+      - name: Run Rector
+        working-directory: contents/tools/rector
+        run: vendor/bin/rector process ../.. --dry-run
