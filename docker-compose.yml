@@ -9,7 +9,7 @@ services:
     ports:
       - "99:80"
     volumes:
-      - ./contents:/workspace:delegated
+      - ./contents/laravel:/workspace:delegated
     env_file:
       - .env
     depends_on:
@@ -40,7 +40,7 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - ./contents:/workspace:delegated
+      - ./contents/laravel:/workspace:delegated
     tty: true
     entrypoint: 
       - sh
@@ -58,7 +58,7 @@ services:
       context: ./docker
       dockerfile: rector.dockerfile
     volumes: 
-      - ./contents:/project:delegated
+      - ./contents/laravel:/project:delegated
     # entrypoint: ["tail", "-f", "/dev/null"]
     tty: true
     entrypoint: 
@@ -118,7 +118,7 @@ services:
       dockerfile: swagger.dockerfile
       target: local
     volumes:
-      - ./contents:/app/l5-swagger-app:rw
+      - ./contents/laravel:/app/l5-swagger-app:rw
     ports:
       - "7777:80"
     depends_on:
