@@ -82,6 +82,7 @@ services:
       - sh
       - -c
       - |
+        chmod -R 777 /workspace && 
         npm install &&
         npm run serve &&
         tail -f /dev/null
