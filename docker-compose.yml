@@ -60,7 +60,7 @@ services:
     volumes: 
       - ./contents/laravel:/project:delegated
     # entrypoint: ["tail", "-f", "/dev/null"]
-    tty: true
+    tty: true 
     entrypoint: 
       - sh
       - -c
